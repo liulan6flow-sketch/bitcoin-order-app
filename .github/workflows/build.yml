@@ -48,6 +48,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Audit
+        continue-on-error: true
+        run: npm audit --package-lock-only
+
       - name: Update types to latest
         run: npm install --save-dev @types/node@latest --force
 
@@ -73,6 +77,7 @@ jobs:
 
       - name: Deploy
         run: npm run deploy
+
       - name: Delete feature branch
         run: |
           branch_ref=refs/heads/feature/workshop6-cleanup
