@@ -73,3 +73,10 @@ jobs:
 
       - name: Deploy
         run: npm run deploy
+      - name: Delete feature branch
+        run: |
+          branch_ref=refs/heads/feature/workshop6-cleanup
+          existing_ref=$(git ls-remote origin "$branch_ref")
+          if [ -n "$existing_ref" ]; then
+            git push origin ":$branch_ref"
+          fi
