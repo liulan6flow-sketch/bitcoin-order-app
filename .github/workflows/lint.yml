@@ -1,0 +1,38 @@
+name: linting-tool-scan
+
+on:
+  push:
+    branches: [githubcicd]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '16'
+
+      - name: Install Dependencies
+        run: npm ci --force
+
+      - name: Installing JSHint
+        run: npm install --global jshint@2.13.6
+
+      - name: Change script permission
+        run: |
+          sed -i 's/\r$//' scripts/jshint-script.sh
+          chmod +x scripts/jshint-script.sh
+
+      - name: Run scan with JSHint
+        run: scripts/jshint-script.sh
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linting tool report
+          path: JSHint-report
+          if-no-files-found: error

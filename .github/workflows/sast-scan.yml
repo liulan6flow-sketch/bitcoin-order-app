@@ -1,0 +1,53 @@
+name: sast-scan
+
+on:
+  push:
+    branches: [githubcicd]
+
+jobs:
+  sast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '16'
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci --force
+
+      - name: Download OWASP Dependency-Check
+        run: |
+          curl -fsSL --retry 3 \
+            https://github.com/dependency-check/DependencyCheck/releases/download/v13.0.0/dependency-check-13.0.0-release.zip \
+            -o "$RUNNER_TEMP/dependency-check.zip"
+          unzip -q "$RUNNER_TEMP/dependency-check.zip" -d "$RUNNER_TEMP"
+
+      - name: Run OWASP Dependency-Check
+        run: |
+          bash "$RUNNER_TEMP/dependency-check/bin/dependency-check.sh" \
+            --project bitcoin \
+            --nvdDatafeed 'https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/nvdcve-{0}.json.gz' \
+            --scan . \
+            --exclude '**/node_modules/**' \
+            --exclude '**/.git/**' \
+            --format HTML \
+            --out . \
+            --disableOssIndex
+
+      - name: Archive SAST report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-report
+          path: dependency-check-report.html
+          if-no-files-found: error
